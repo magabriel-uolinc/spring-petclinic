@@ -1,0 +1,10 @@
+name: spring-petclinic
+version: 1.0.0
+description: APM project for spring-petclinic
+author: Developer
+dependencies:
+  apm:
+  - github/awesome-copilot/plugins/java-development
+  mcp: []
+includes: auto
+scripts: {}

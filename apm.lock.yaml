@@ -1,0 +1,16 @@
+lockfile_version: '1'
+generated_at: '2026-05-14T18:49:33.406358+00:00'
+apm_version: 0.13.0
+dependencies:
+- repo_url: github/awesome-copilot
+  host: github.com
+  resolved_commit: 97cc3f24602b6431b82dbce2afec7a1f3611664f
+  virtual_path: plugins/java-development
+  is_virtual: true
+  package_type: marketplace_plugin
+  deployed_files:
+  - .agents/skills/create-spring-boot-java-project
+  - .agents/skills/java-docs
+  - .agents/skills/java-junit
+  - .agents/skills/java-springboot
+  content_hash: sha256:9a54a97c7701a4aab1ed0d13dc4374ebf05f60be211f81fb4793d8a9c61283ff

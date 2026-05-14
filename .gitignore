@@ -47,3 +47,4 @@ _site/
 *.css
 !petclinic.css
 !frontend/src/app/globals.css
+apm_modules/
