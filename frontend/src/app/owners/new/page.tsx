@@ -5,7 +5,7 @@ import { createOwner, ownerInputFromForm } from "@/lib/owners-api";
 async function createOwnerAction(formData: FormData) {
   "use server";
 
-  const owner = createOwner(ownerInputFromForm(formData));
+  const owner = await createOwner(ownerInputFromForm(formData));
   redirect(`/owners/${owner.id}`);
 }
 

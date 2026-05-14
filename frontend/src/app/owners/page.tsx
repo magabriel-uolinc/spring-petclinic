@@ -15,7 +15,7 @@ export default async function OwnersPage({
   const query = await searchParams;
   const lastName = singleValue(query.lastName) ?? "";
   const page = Number(singleValue(query.page) ?? "0");
-  const owners = getOwners({ lastName, page, size: PAGE_SIZE });
+  const owners = await getOwners({ lastName, page, size: PAGE_SIZE });
   const previousPage = Math.max(0, owners.page - 1);
   const nextPage = Math.min(Math.max(owners.totalPages - 1, 0), owners.page + 1);
 

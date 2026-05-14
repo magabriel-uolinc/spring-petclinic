@@ -1,46 +1,30 @@
-import mockData from "@/mock.json";
-import type { Page, Specialty, Vet, VetSpecialty, VetWithSpecialties } from "@/lib/types";
+import type { Page, VetWithSpecialties } from "@/lib/types";
 
-const vets: Vet[] = [...mockData.vets];
-const specialties: Specialty[] = [...mockData.specialties];
-const vetSpecialties: VetSpecialty[] = [...mockData.vetSpecialties];
+const API_BASE_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
-const DEFAULT_PAGE_SIZE = 5;
-
-function paginate<T>(items: T[], page: number, size: number): Page<T> {
-  const safePage = Number.isFinite(page) && page > 0 ? page : 0;
-  const safeSize = Number.isFinite(size) && size > 0 ? size : DEFAULT_PAGE_SIZE;
-  const start = safePage * safeSize;
-  const content = items.slice(start, start + safeSize);
-
-  return {
-    content,
-    page: safePage,
-    size: safeSize,
-    totalElements: items.length,
-    totalPages: Math.ceil(items.length / safeSize),
-  };
+function apiUrl(path: string) {
+  return new URL(path, API_BASE_URL);
 }
 
-function specialtiesForVet(vetId: number) {
-  const specialtyIds = vetSpecialties
-    .filter((relationship) => relationship.vetId === vetId)
-    .map((relationship) => relationship.specialtyId);
-
-  return specialties.filter((specialty) => specialtyIds.includes(specialty.id));
-}
-
-export function getVets({
+export async function getVets({
   page = 0,
-  size = DEFAULT_PAGE_SIZE,
+  size = 5,
 }: {
   page?: number;
   size?: number;
-} = {}): Page<VetWithSpecialties> {
-  const resolvedVets = vets.map((vet) => ({
-    ...vet,
-    specialties: specialtiesForVet(vet.id),
-  }));
+} = {}): Promise<Page<VetWithSpecialties>> {
+  const params = new URLSearchParams({
+    page: String(Number.isFinite(page) ? page : 0),
+    size: String(Number.isFinite(size) && size > 0 ? size : 5),
+  });
 
-  return paginate(resolvedVets, page, size);
+  const response = await fetch(apiUrl(`/api/vets?${params}`), {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend request failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<Page<VetWithSpecialties>>;
 }

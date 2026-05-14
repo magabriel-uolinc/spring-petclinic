@@ -7,7 +7,7 @@ async function updatePetAction(ownerId: number, petId: number, formData: FormDat
 
   const input = petInputFromForm(formData);
 
-  if (hasDuplicatePetName(ownerId, input.name, petId)) {
+  if (await hasDuplicatePetName(ownerId, input.name, petId)) {
     redirect(`/owners/${ownerId}/pets/${petId}/edit?error=duplicate`);
   }
 
@@ -15,7 +15,7 @@ async function updatePetAction(ownerId: number, petId: number, formData: FormDat
     redirect(`/owners/${ownerId}/pets/${petId}/edit?error=futureBirthDate`);
   }
 
-  const pet = updatePet(ownerId, petId, input);
+  const pet = await updatePet(ownerId, petId, input);
 
   if (!pet) {
     notFound();
@@ -33,15 +33,15 @@ export default async function EditPetPage({
 }) {
   const { ownerId, petId } = await params;
   const { error } = await searchParams;
-  const owner = getOwner(Number(ownerId));
-  const pet = getPet(Number(ownerId), Number(petId));
+  const owner = await getOwner(Number(ownerId));
+  const pet = await getPet(Number(ownerId), Number(petId));
 
   if (!owner || !pet) {
     notFound();
   }
 
   const action = updatePetAction.bind(null, owner.id, pet.id);
-  const types = getPetTypes();
+  const types = await getPetTypes();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
