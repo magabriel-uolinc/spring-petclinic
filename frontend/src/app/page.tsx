@@ -16,6 +16,10 @@ export default function Home() {
           <h2 className="text-xl font-semibold">Owners</h2>
           <p className="mt-2 text-sm text-zinc-600">Search owners and manage pets and visits.</p>
         </Link>
+        <Link className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-emerald-600" href="/vets">
+          <h2 className="text-xl font-semibold">Veterinarians</h2>
+          <p className="mt-2 text-sm text-zinc-600">Browse vets and their specialties.</p>
+        </Link>
       </div>
     </main>
   );

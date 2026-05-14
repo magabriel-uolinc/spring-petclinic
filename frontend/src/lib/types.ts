@@ -43,7 +43,6 @@ export type PetDetail = Pet & {
 export type OwnerDetail = Owner & {
   pets: PetDetail[];
 };
-
 export type Specialty = {
   id: number;
   name: string;
