@@ -332,17 +332,57 @@ Fora do escopo inicial:
 
 ## Riscos e mitigação
 
-| Risco | Mitigação |
-| --- | --- |
-| Frontend bloquear esperando backend | Usar fixtures/mocks desde o início |
-| Backend vazar entities JPA | Usar DTOs explícitos |
-| Divergência de payload | Definir exemplos JSON antes de implementar |
+| Risco                                    | Mitigação                                                      |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| Frontend bloquear esperando backend      | Usar fixtures/mocks desde o início                             |
+| Backend vazar entities JPA               | Usar DTOs explícitos                                           |
+| Divergência de payload                   | Definir exemplos JSON antes de implementar                     |
 | Validações diferentes entre front e back | Backend é fonte da verdade; frontend replica mensagens básicas |
-| Paginação confusa | API zero-based; UI converte para one-based |
-| Refatoração consumir tempo | Só extrair regras necessárias para API |
+| Paginação confusa                        | API zero-based; UI converte para one-based                     |
+| Refatoração consumir tempo               | Só extrair regras necessárias para API                         |
 
 ## Conclusão
 
 A melhor abordagem para esse contexto é **contrato REST mínimo primeiro**. Ela permite que as equipes trabalhem em paralelo dentro da janela curta, preserva o domínio e banco atuais, e evita que a migração vire uma refatoração grande demais para o tempo disponível.
 
 Depois da primeira entrega, a evolução natural é remover gradualmente Thymeleaf/WebJars, fortalecer OpenAPI/testes de contrato e organizar melhor a camada de service.
+
+---
+
+Olá, time responsável pela rota de owners!
+
+Conforme o plano de implementação da rota de veterinários (/vets), precisamos do arquivo compartilhado de tipos em `frontend/src/lib/types.ts` antes de prosseguir. O arquivo deve conter os seguintes exports:
+
+```ts
+export type Page<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
+export type Specialty = {
+  id: number;
+  name: string;
+};
+
+export type Vet = {
+  id: number;
+  firstName: string;
+  lastName: string;
+};
+
+export type VetSpecialty = {
+  vetId: number;
+  specialtyId: number;
+};
+
+export type VetWithSpecialties = Vet & {
+  specialties: Specialty[];
+};
+```
+
+Por favor, criem ou disponibilizem esse arquivo para que possamos seguir com a implementação da rota de veterinários, conforme o contrato de paralelismo entre as rotas.
+
+Obrigado!
