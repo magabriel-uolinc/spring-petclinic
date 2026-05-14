@@ -5,7 +5,7 @@ import { getOwner, ownerInputFromForm, updateOwner } from "@/lib/owners-api";
 async function updateOwnerAction(ownerId: number, formData: FormData) {
   "use server";
 
-  const owner = updateOwner(ownerId, ownerInputFromForm(formData));
+  const owner = await updateOwner(ownerId, ownerInputFromForm(formData));
 
   if (!owner) {
     notFound();
@@ -20,7 +20,7 @@ export default async function EditOwnerPage({
   params: Promise<{ ownerId: string }>;
 }) {
   const { ownerId } = await params;
-  const owner = getOwner(Number(ownerId));
+  const owner = await getOwner(Number(ownerId));
 
   if (!owner) {
     notFound();

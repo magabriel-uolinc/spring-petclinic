@@ -8,7 +8,7 @@ export default async function OwnerDetailPage({
   params: Promise<{ ownerId: string }>;
 }) {
   const { ownerId } = await params;
-  const owner = getOwner(Number(ownerId));
+  const owner = await getOwner(Number(ownerId));
 
   if (!owner) {
     notFound();

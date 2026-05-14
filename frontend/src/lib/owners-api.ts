@@ -1,4 +1,3 @@
-import mockData from "@/mock.json";
 import type {
   Owner,
   OwnerDetail,
@@ -12,170 +11,129 @@ import type {
   VisitInput,
 } from "@/lib/types";
 
-const owners: Owner[] = [...mockData.owners];
-const pets: Pet[] = [...mockData.pets];
-const visits: Visit[] = [...mockData.visits];
-const petTypes: PetType[] = [...mockData.types];
+const API_BASE_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
-const DEFAULT_PAGE_SIZE = 5;
-
-function nextId(items: Array<{ id: number }>) {
-  return Math.max(0, ...items.map((item) => item.id)) + 1;
+class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
 }
 
-function paginate<T>(items: T[], page: number, size: number): Page<T> {
-  const safePage = Number.isFinite(page) && page > 0 ? page : 0;
-  const safeSize = Number.isFinite(size) && size > 0 ? size : DEFAULT_PAGE_SIZE;
-  const start = safePage * safeSize;
-  const content = items.slice(start, start + safeSize);
+function apiUrl(path: string) {
+  return new URL(path, API_BASE_URL);
+}
 
-  return {
-    content,
-    page: safePage,
-    size: safeSize,
-    totalElements: items.length,
-    totalPages: Math.ceil(items.length / safeSize),
-  };
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(apiUrl(path), {
+    ...init,
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(`Backend request failed with status ${response.status}`, response.status);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function apiFetchOptional<T>(path: string, init?: RequestInit): Promise<T | undefined> {
+  try {
+    return await apiFetch<T>(path, init);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 function required(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
 }
 
-function findPetType(typeId: number) {
-  return petTypes.find((type) => type.id === typeId);
-}
-
-function toPetDetail(pet: Pet): PetDetail {
-  const type = findPetType(pet.typeId);
-
-  if (!type) {
-    throw new Error(`Pet type ${pet.typeId} was not found`);
-  }
-
+function petFromDetail(ownerId: number, pet: PetDetail): Pet {
   return {
-    ...pet,
-    type,
-    visits: visits.filter((visit) => visit.petId === pet.id),
+    id: pet.id,
+    name: pet.name,
+    birthDate: pet.birthDate,
+    typeId: pet.type.id,
+    ownerId,
   };
 }
 
-export function getOwners({
+export async function getOwners({
   lastName = "",
   page = 0,
-  size = DEFAULT_PAGE_SIZE,
+  size = 5,
 }: {
   lastName?: string;
   page?: number;
   size?: number;
 } = {}) {
-  const normalizedLastName = lastName.trim().toLowerCase();
-  const filteredOwners = normalizedLastName
-    ? owners.filter((owner) =>
-        owner.lastName.toLowerCase().startsWith(normalizedLastName),
-      )
-    : owners;
+  const params = new URLSearchParams({
+    lastName,
+    page: String(Number.isFinite(page) ? page : 0),
+    size: String(Number.isFinite(size) && size > 0 ? size : 5),
+  });
 
-  return paginate(filteredOwners, page, size);
+  return apiFetch<Page<Owner>>(`/api/owners?${params}`);
 }
 
-export function getOwner(ownerId: number): OwnerDetail | undefined {
-  const owner = owners.find((item) => item.id === ownerId);
-
-  if (!owner) {
-    return undefined;
-  }
-
-  return {
-    ...owner,
-    pets: pets
-      .filter((pet) => pet.ownerId === owner.id)
-      .map((pet) => toPetDetail(pet)),
-  };
+export function getOwner(ownerId: number): Promise<OwnerDetail | undefined> {
+  return apiFetchOptional<OwnerDetail>(`/api/owners/${ownerId}`);
 }
 
 export function getPetTypes() {
-  return [...petTypes].sort((left, right) => left.name.localeCompare(right.name));
+  return apiFetch<PetType[]>("/api/pet-types");
 }
 
-export function getPet(ownerId: number, petId: number) {
-  return pets.find((pet) => pet.ownerId === ownerId && pet.id === petId);
+export async function getPet(ownerId: number, petId: number) {
+  const owner = await getOwner(ownerId);
+  const pet = owner?.pets.find((item) => item.id === petId);
+  return pet ? petFromDetail(ownerId, pet) : undefined;
 }
 
 export function createOwner(input: OwnerInput) {
-  const owner = {
-    ...input,
-    id: nextId(owners),
-  };
-
-  owners.push(owner);
-  return owner;
+  return apiFetch<Owner>("/api/owners", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function updateOwner(ownerId: number, input: OwnerInput) {
-  const index = owners.findIndex((owner) => owner.id === ownerId);
-
-  if (index === -1) {
-    return undefined;
-  }
-
-  owners[index] = {
-    id: ownerId,
-    ...input,
-  };
-
-  return owners[index];
+  return apiFetchOptional<Owner>(`/api/owners/${ownerId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
 export function createPet(ownerId: number, input: PetInput) {
-  const owner = getOwner(ownerId);
-
-  if (!owner) {
-    return undefined;
-  }
-
-  const pet = {
-    ...input,
-    id: nextId(pets),
-    ownerId,
-  };
-
-  pets.push(pet);
-  return pet;
+  return apiFetchOptional<PetDetail>(`/api/owners/${ownerId}/pets`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function updatePet(ownerId: number, petId: number, input: PetInput) {
-  const index = pets.findIndex((pet) => pet.ownerId === ownerId && pet.id === petId);
-
-  if (index === -1) {
-    return undefined;
-  }
-
-  pets[index] = {
-    ...pets[index],
-    ...input,
-    id: petId,
-    ownerId,
-  };
-
-  return pets[index];
+  return apiFetchOptional<PetDetail>(`/api/owners/${ownerId}/pets/${petId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
 export function createVisit(ownerId: number, petId: number, input: VisitInput) {
-  const pet = getPet(ownerId, petId);
-
-  if (!pet) {
-    return undefined;
-  }
-
-  const visit = {
-    ...input,
-    id: nextId(visits),
-    petId,
-  };
-
-  visits.push(visit);
-  return visit;
+  return apiFetchOptional<Visit>(`/api/owners/${ownerId}/pets/${petId}/visits`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function ownerInputFromForm(formData: FormData): OwnerInput {
@@ -203,13 +161,13 @@ export function visitInputFromForm(formData: FormData): VisitInput {
   };
 }
 
-export function hasDuplicatePetName(ownerId: number, name: string, currentPetId?: number) {
+export async function hasDuplicatePetName(ownerId: number, name: string, currentPetId?: number) {
+  const owner = await getOwner(ownerId);
   const normalizedName = name.trim().toLowerCase();
 
-  return pets.some(
+  return owner?.pets.some(
     (pet) =>
-      pet.ownerId === ownerId &&
       pet.id !== currentPetId &&
       pet.name.toLowerCase() === normalizedName,
-  );
+  ) ?? false;
 }

@@ -7,7 +7,7 @@ async function createPetAction(ownerId: number, formData: FormData) {
 
   const input = petInputFromForm(formData);
 
-  if (hasDuplicatePetName(ownerId, input.name)) {
+  if (await hasDuplicatePetName(ownerId, input.name)) {
     redirect(`/owners/${ownerId}/pets/new?error=duplicate`);
   }
 
@@ -15,7 +15,7 @@ async function createPetAction(ownerId: number, formData: FormData) {
     redirect(`/owners/${ownerId}/pets/new?error=futureBirthDate`);
   }
 
-  const pet = createPet(ownerId, input);
+  const pet = await createPet(ownerId, input);
 
   if (!pet) {
     notFound();
@@ -33,14 +33,14 @@ export default async function NewPetPage({
 }) {
   const { ownerId } = await params;
   const { error } = await searchParams;
-  const owner = getOwner(Number(ownerId));
+  const owner = await getOwner(Number(ownerId));
 
   if (!owner) {
     notFound();
   }
 
   const action = createPetAction.bind(null, owner.id);
-  const types = getPetTypes();
+  const types = await getPetTypes();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">

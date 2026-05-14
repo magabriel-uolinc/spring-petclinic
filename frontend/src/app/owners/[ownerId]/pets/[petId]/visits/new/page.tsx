@@ -5,7 +5,7 @@ import { createVisit, getOwner, getPet, visitInputFromForm } from "@/lib/owners-
 async function createVisitAction(ownerId: number, petId: number, formData: FormData) {
   "use server";
 
-  const visit = createVisit(ownerId, petId, visitInputFromForm(formData));
+  const visit = await createVisit(ownerId, petId, visitInputFromForm(formData));
 
   if (!visit) {
     notFound();
@@ -20,8 +20,8 @@ export default async function NewVisitPage({
   params: Promise<{ ownerId: string; petId: string }>;
 }) {
   const { ownerId, petId } = await params;
-  const owner = getOwner(Number(ownerId));
-  const pet = getPet(Number(ownerId), Number(petId));
+  const owner = await getOwner(Number(ownerId));
+  const pet = await getPet(Number(ownerId), Number(petId));
 
   if (!owner || !pet) {
     notFound();

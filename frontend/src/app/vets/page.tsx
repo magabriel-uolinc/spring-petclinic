@@ -14,7 +14,7 @@ export default async function VetsPage({
 }) {
   const query = await searchParams;
   const page = Number(singleValue(query.page) ?? "0");
-  const vets = getVets({ page, size: PAGE_SIZE });
+  const vets = await getVets({ page, size: PAGE_SIZE });
   const previousPage = Math.max(0, vets.page - 1);
   const nextPage = Math.min(Math.max(vets.totalPages - 1, 0), vets.page + 1);
 
@@ -25,7 +25,7 @@ export default async function VetsPage({
           Spring PetClinic
         </Link>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Veterinarians</h1>
-        <p className="mt-2 text-zinc-600">Browse veterinarians and their specialties from mock data.</p>
+        <p className="mt-2 text-zinc-600">Browse veterinarians and their specialties from the backend API.</p>
       </header>
 
       {vets.content.length === 0 ? (
